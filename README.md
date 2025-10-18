@@ -2,7 +2,7 @@
 
 **Minecraft Shop Configuration Plugin Converter**  
 
-*Version 1 uses Vibecode (compatibility may vary).*
+*Version 1 id Vibed Code Error Is random (I can't assist on this version).*
 
 ---
 
