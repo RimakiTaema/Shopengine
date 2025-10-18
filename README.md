@@ -2,7 +2,8 @@
 
 **Minecraft Shop Configuration Plugin Converter**  
 
-*Version 1 id Vibed Code Error Is random (I can't assist on this version).*
+*Version 1 is Vibed Code
+Error Is random (I can't assist on this version).*
 
 ---
 
