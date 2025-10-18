@@ -1,7 +1,36 @@
-# Shopengine
-The Minecraft Shop Configuration Plugin converter (v1 is vibecode so dont care)
+# ShopEngine
 
-> [!WARNING]
-> This program can't work without yml or yaml file of shop configuration
-> please be sure you obtained legally
-> I don't help in copyright issue **This is only a Tool**
+**Minecraft Shop Configuration Plugin Converter**  
+
+*Version 1 uses Vibecode (compatibility may vary).*
+
+---
+
+## ⚠️ Important Notice
+```
+- This program requires a valid `.yml` or `.yaml` shop configuration file to function.
+- Make sure you have obtained the file legally.
+- This tool is provided as-is. The developer cannot assist with copyright issues.
+```
+
+# Overview
+ShopEngine allows you to convert Minecraft shop configurations between different plugin formats quickly and efficiently.
+It is designed purely as a utility to make managing shop data easier for server administrators and plugin developers.
+(Modified By AI, Real Written by me is in v2)
+
+# Installation 
+```
+# Clone the repository
+https://github.com/RimakiTaema/Shopengine/
+
+# Navigate into the folder
+cd Shopengine
+
+# Run directly using Python (if applicable)
+python shop-converter.py
+```
+
+# Usage
+
+It's gui so it's straightforward lol
+
