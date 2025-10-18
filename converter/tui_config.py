@@ -13,6 +13,9 @@ class ColorScheme:
         # Define custom colors (if terminal supports it)
         if curses.can_change_color():
             curses.init_color(100, 200, 200, 200) # Light grey
+            curses.init_color(101, 0, 200, 700)   # Custom blue
+            curses.init_color(102, 0, 700, 200)   # Custom green
+
         # Initialize color pairs
         curses.init_pair(1, curses.COLOR_GREEN, -1)      # Success
         curses.init_pair(2, curses.COLOR_RED, -1)        # Error
@@ -30,9 +33,6 @@ class ColorScheme:
             curses.init_pair(9, curses.COLOR_WHITE, -1)                   # Light grey fallback
         
         curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_CYAN)   # Info bg
-        curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_CYAN)   # Info bg
-        curses.init_pair(9, 100, -1)                      # Light grey text
-
         self.SUCCESS = curses.color_pair(1)
         self.ERROR = curses.color_pair(2)
         self.WARNING = curses.color_pair(3)
