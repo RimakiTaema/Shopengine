@@ -23,8 +23,17 @@ Version: 2.0.0
 
 import sys
 import logging
-import curses
-from curses import wrapper
+import os
+
+# Add current directory to Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    import curses
+    from curses import wrapper
+    CURSES_AVAILABLE = True
+except ImportError:
+    CURSES_AVAILABLE = False
 
 from converter.main_menu import main_menu
 from converter.utils import init_folders
@@ -58,47 +67,34 @@ def main() -> None:
             sys.exit(1)
     else:
         try:
-            wrapper(main_menu)
+            if CURSES_AVAILABLE:
+                wrapper(main_menu)
+            else:
+                print("Terminal UI not available. Running in console mode...")
+                # Fallback to console mode
+                from converter.engine import ShopConverterEngine
+                engine = ShopConverterEngine()
+                engine.convert_shops()
         except KeyboardInterrupt:
             print("\n\n⊘ Conversion cancelled by user.")
             logger.info("User cancelled conversion")
-        except curses.error as e:
-            print(f"\n\n✗ Terminal error: {e}")
-            print("Try running in a different terminal or check terminal compatibility.")
-            logger.exception("Terminal error occurred")
-            sys.exit(1)
         except Exception as e:
-            print(f"\n\n✗ Fatal error: {e}")
-            logger.exception("Fatal error occurred")
-            sys.exit(1)
+            if "curses" in str(e).lower() or "cbreak" in str(e).lower():
+                print(f"\n\n✗ Terminal error: {e}")
+                print("Terminal UI not supported. Running in console mode...")
+                try:
+                    from converter.engine import ShopConverterEngine
+                    engine = ShopConverterEngine()
+                    engine.convert_shops()
+                except Exception as console_e:
+                    print(f"\n\n✗ Console mode failed: {console_e}")
+                    logger.exception("Console mode failed")
+                    sys.exit(1)
+            else:
+                print(f"\n\n✗ Fatal error: {e}")
+                logger.exception("Fatal error occurred")
+                sys.exit(1)
 
 
 if __name__ == '__main__':
     main()
-    if len(sys.argv) > 1 and sys.argv[1].lower() == 'init':
-        try:
-            init_folders()
-            print("✓ Folder structure initialized!")
-            print("\nCreated directories:")
-            for plugin in SUPPORTED_PLUGINS:
-                print(f"  - shops_to_convert/{plugin}/")
-            print("\nPlace your shop files in the appropriate plugin folder.")
-        except Exception as e:
-            print(f"\n✗ Failed to initialize folders: {e}")
-            logger.exception("Failed to initialize folders")
-            sys.exit(1)
-    else:
-        try:
-            wrapper(main_menu)
-        except KeyboardInterrupt:
-            print("\n\n⊘ Conversion cancelled by user.")
-            logger.info("User cancelled conversion")
-        except curses.error as e:
-            print(f"\n\n✗ Terminal error: {e}")
-            print("Try running in a different terminal or check terminal compatibility.")
-            logger.exception("Terminal error occurred")
-            sys.exit(1)
-        except Exception as e:
-            print(f"\n\n✗ Fatal error: {e}")
-            logger.exception("Fatal error occurred")
-            sys.exit(1)
