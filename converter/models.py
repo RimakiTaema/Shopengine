@@ -18,6 +18,7 @@ class PriceFormat(Enum):
     FLOAT_INTERVAL = 'FLOAT_INTERVAL'
     FLOAT_FIXED = 'FLOAT_FIXED'
     DYNAMIC = 'DYNAMIC'
+    PLAYER = 'PLAYER'
 
 
 @dataclass

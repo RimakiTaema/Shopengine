@@ -42,7 +42,8 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
             ["FLAT - Fixed buy/sell prices", 
              "FLOAT_INTERVAL - Fluctuating prices (all day, no times)",
              "FLOAT_FIXED - Fluctuating prices (day config unlocked, times set)",
-             "DYNAMIC - Supply/demand based pricing",
+             "DYNAMIC - [Soon] Supply/demand based pricing",
+             "PLAYER - [Soon] Player-based pricing format",
              "FLOAT - [DEPRECATED] Old fluctuating prices format"],
             "Choose how prices should be calculated"
         )
@@ -51,7 +52,15 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
             raise KeyboardInterrupt("User cancelled")
         
         price_format = [PriceFormat.FLAT, PriceFormat.FLOAT_INTERVAL, 
-                       PriceFormat.FLOAT_FIXED, PriceFormat.DYNAMIC, PriceFormat.FLOAT][format_idx]
+                       PriceFormat.FLOAT_FIXED, PriceFormat.DYNAMIC, PriceFormat.PLAYER, PriceFormat.FLOAT][format_idx]
+        
+        # Handle "Soon" formats
+        if price_format in [PriceFormat.DYNAMIC, PriceFormat.PLAYER]:
+            tui.add_log("This pricing format is not yet implemented", "WARNING")
+            tui.add_log("Please check back in a future update", "INFO")
+            tui.draw_dashboard()
+            tui.get_input("Press Enter to continue...", "")
+            return get_price_config_interactive(shop_name, tui)
         
         extra = {}
         buy_price = sell_price = 0.0
@@ -138,7 +147,7 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
         
         scope = input("Apply to this shop or all? [this/all]: ").strip().lower() or 'this'
         
-        print("Formats: FLAT, FLOAT_INTERVAL, FLOAT_FIXED, DYNAMIC, FLOAT (deprecated)")
+        print("Formats: FLAT, FLOAT_INTERVAL, FLOAT_FIXED, DYNAMIC (soon), PLAYER (soon), FLOAT (deprecated)")
         price_format_str = input("Format: ").strip().upper() or 'FLAT'
         
         try:
@@ -146,6 +155,13 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
         except KeyError:
             logger.warning(f"Invalid format, using FLAT")
             price_format = PriceFormat.FLAT
+        
+        # Handle "Soon" formats
+        if price_format in [PriceFormat.DYNAMIC, PriceFormat.PLAYER]:
+            print("\nThis pricing format is not yet implemented")
+            print("Please check back in a future update")
+            input("Press Enter to continue...")
+            return get_price_config_interactive(shop_name, tui)
         
         extra = {}
         buy_price = sell_price = 0.0
