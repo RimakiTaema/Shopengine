@@ -15,6 +15,8 @@ class PriceFormat(Enum):
     """Price format types for ExcellentShop"""
     FLAT = 'FLAT'
     FLOAT = 'FLOAT'
+    FLOAT_INTERVAL = 'FLOAT_INTERVAL'
+    FLOAT_FIXED = 'FLOAT_FIXED'
     DYNAMIC = 'DYNAMIC'
 
 

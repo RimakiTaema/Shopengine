@@ -126,6 +126,54 @@ def _create_price_structure(price_format: str, buy_price: float, sell_price: flo
             },
             'Round_Decimals': False
         }
+    elif price_format == 'FLOAT_INTERVAL':
+        return {
+            'Type': 'FLOAT',
+            'BUY': {
+                'Min': extra_params.get('MIN', buy_price),
+                'Max': extra_params.get('MAX', buy_price)
+            },
+            'SELL': {
+                'Min': extra_params.get('MIN', sell_price),
+                'Max': extra_params.get('MAX', sell_price)
+            },
+            'Refresh': {
+                'Type': 'INTERVAL',
+                'Interval': extra_params.get('TIMER', 60),
+                'Days': 'THURSDAY,WEDNESDAY,SUNDAY,FRIDAY,MONDAY,TUESDAY,SATURDAY',
+                'Times': []
+            },
+            'Round_Decimals': extra_params.get('Round_Decimals', False)
+        }
+    elif price_format == 'FLOAT_FIXED':
+        # Parse day configuration
+        day_config = extra_params.get('Day_Config', 'all')
+        if day_config.lower() == 'all':
+            days = 'THURSDAY,WEDNESDAY,SUNDAY,FRIDAY,MONDAY,TUESDAY,SATURDAY'
+        else:
+            days = day_config.upper()
+        
+        return {
+            'Type': 'FLOAT',
+            'BUY': {
+                'Min': extra_params.get('MIN', buy_price),
+                'Max': extra_params.get('MAX', buy_price)
+            },
+            'SELL': {
+                'Min': extra_params.get('MIN', sell_price),
+                'Max': extra_params.get('MAX', sell_price)
+            },
+            'Refresh': {
+                'Type': 'FIXED',
+                'Interval': extra_params.get('TIMER', 60),
+                'Days': days,
+                'Times': [
+                    extra_params.get('Start_Time', '00:00'),
+                    extra_params.get('End_Time', '23:59')
+                ]
+            },
+            'Round_Decimals': extra_params.get('Round_Decimals', False)
+        }
     elif price_format == 'DYNAMIC':
         return {
             'Type': 'DYNAMIC',
