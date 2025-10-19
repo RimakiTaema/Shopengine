@@ -1,4 +1,10 @@
-"""Data models for shop converter"""
+"""
+Data models for shop converter.
+
+This module defines the core data structures used throughout the shop conversion
+process, including price configurations, item configurations, and price format
+enumerations.
+"""
 
 from dataclasses import dataclass
 from typing import Dict, Optional, Any

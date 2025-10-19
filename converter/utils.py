@@ -6,19 +6,48 @@ from .models import ItemConfig, PriceConfig
 
 def convert_material_to_item_id(material: str) -> Optional[str]:
     """Convert material name to Minecraft item ID"""
-    if not material:
+    if not material or not isinstance(material, str):
         return None
-    return f"minecraft:{material.lower()}"
+    
+    # Clean the material name
+    clean_material = material.strip().lower()
+    
+    # If it already has minecraft: prefix, return as is
+    if clean_material.startswith('minecraft:'):
+        return clean_material
+    
+    return f"minecraft:{clean_material}"
 
 
 def format_enchantments(enchantments: Optional[Dict[str, int]]) -> List[Dict[str, Any]]:
     """Format enchantments for ExcellentShop"""
-    if not enchantments:
+    if not enchantments or not isinstance(enchantments, dict):
         return []
-    return [
-        {'id': f'minecraft:{name.lower()}', 'lvl': int(level)}
-        for name, level in enchantments.items()
-    ]
+    
+    result = []
+    for name, level in enchantments.items():
+        if not isinstance(name, str) or not isinstance(level, (int, float)):
+            continue
+        
+        try:
+            clean_name = name.strip().lower()
+            if not clean_name:
+                continue
+                
+            # If it already has minecraft: prefix, use as is
+            if clean_name.startswith('minecraft:'):
+                enchant_id = clean_name
+            else:
+                enchant_id = f'minecraft:{clean_name}'
+            
+            result.append({
+                'id': enchant_id,
+                'lvl': int(level)
+            })
+        except (ValueError, TypeError):
+            continue
+    
+    return result
 
 
 def create_excellent_shop_item(
@@ -61,18 +90,93 @@ def create_excellent_shop_item(
         'Required_Permissions': [],
         'Forbidden_Permissions': [],
         'Currency': currency,
-        'Price': {
-            'Type': price_format,
-            'BUY': buy_price,
-            'SELL': sell_price,
-            **extra_params
-        },
+        'Price': _create_price_structure(price_format, buy_price, sell_price, extra_params),
         'Stock': {
             'GLOBAL': {'BuyAmount': -1, 'SellAmount': -1, 'RestockTime': 0},
             'PLAYER': {'BuyAmount': -1, 'SellAmount': -1, 'RestockTime': 0}
         },
         'Shop_View': {'Slot': item_config.slot, 'Page': item_config.page}
     }
+
+
+def _create_price_structure(price_format: str, buy_price: float, sell_price: float, extra_params: Dict[str, Any]) -> Dict[str, Any]:
+    """Create price structure based on format"""
+    if price_format == 'FLAT':
+        return {
+            'Type': 'FLAT',
+            'BUY': buy_price,
+            'SELL': sell_price
+        }
+    elif price_format == 'FLOAT':
+        return {
+            'Type': 'FLOAT',
+            'BUY': {
+                'Min': extra_params.get('MIN', buy_price),
+                'Max': extra_params.get('MAX', buy_price)
+            },
+            'SELL': {
+                'Min': extra_params.get('MIN', sell_price),
+                'Max': extra_params.get('MAX', sell_price)
+            },
+            'Refresh': {
+                'Type': 'INTERVAL',
+                'Interval': extra_params.get('TIMER', 60),
+                'Days': 'THURSDAY,WEDNESDAY,SUNDAY,FRIDAY,MONDAY,TUESDAY,SATURDAY',
+                'Times': []
+            },
+            'Round_Decimals': False
+        }
+    elif price_format == 'DYNAMIC':
+        return {
+            'Type': 'DYNAMIC',
+            'BUY': {
+                'StartValue': extra_params.get('INITIAL', buy_price),
+                'BuyOffset': extra_params.get('STEP', 0.0),
+                'SellOffset': 0.0,
+                'MinOffset': extra_params.get('MIN', 0.0),
+                'MaxOffset': extra_params.get('MAX', 0.0)
+            },
+            'SELL': {
+                'StartValue': extra_params.get('INITIAL', sell_price),
+                'BuyOffset': extra_params.get('STEP', 0.0),
+                'SellOffset': 0.0,
+                'MinOffset': extra_params.get('MIN', 0.0),
+                'MaxOffset': extra_params.get('MAX', 0.0)
+            },
+            'Stabilization': {
+                'Interval': 0,
+                'Amount': 0.0
+            }
+        }
+    else:
+        # Default to FLAT
+        return {
+            'Type': 'FLAT',
+            'BUY': buy_price,
+            'SELL': sell_price
+        }
+
+
+def validate_price_input(value: str, default: float, min_val: float = 0.0) -> float:
+    """Validate and convert price input to float"""
+    try:
+        result = float(value) if value else default
+        if result < min_val:
+            return min_val
+        return result
+    except (ValueError, TypeError):
+        return default
+
+
+def validate_positive_int(value: str, default: int, min_val: int = 1) -> int:
+    """Validate and convert positive integer input"""
+    try:
+        result = int(value) if value else default
+        if result < min_val:
+            return min_val
+        return result
+    except (ValueError, TypeError):
+        return default
 
 
 def init_folders(base_folder: str = 'shops_to_convert') -> None:

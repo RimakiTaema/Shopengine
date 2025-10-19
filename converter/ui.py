@@ -237,7 +237,8 @@ class ShopConverterTUI:
                 y + 1, 2,
                 y + log_display_height, self.width - 3
             )
-        except curses.error:
+        except (curses.error, ValueError):
+            # Handle curses errors and invalid coordinates
             pass
     
     def draw_dashboard(self):
@@ -387,7 +388,7 @@ class ShopConverterTUI:
         try:
             input_str = self.stdscr.getstr(input_y, input_x + 2, 
                                           box_width - 6).decode('utf-8').strip()
-        except (curses.error, UnicodeDecodeError, ValueError):
+        except (curses.error, UnicodeDecodeError, ValueError, AttributeError):
             input_str = ""
         
         curses.noecho()
@@ -510,8 +511,10 @@ class ShopConverterTUI:
                 line, color = content_lines[i]
                 try:
                     safe_line = line[:self.width-4] if len(line) > self.width-4 else line
-                    self.stdscr.addstr(y, 2, safe_line, color)
-                except (curses.error, ValueError):
+                    # Ensure we don't exceed screen bounds
+                    if y < self.height - 1 and len(safe_line) > 0:
+                        self.stdscr.addstr(y, 2, safe_line, color)
+                except (curses.error, ValueError, AttributeError):
                     pass
                 y += 1
             
@@ -584,11 +587,14 @@ class ShopConverterTUI:
                 price_line = f"  Buy: ${buy:.2f} | Sell: ${sell:.2f}"
                 
                 try:
-                    self.stdscr.addstr(y, detail_x + 2, item_line[:detail_width-4], 
-                                     self.COLOR_SUCCESS)
-                    self.stdscr.addstr(y + 1, detail_x + 2, price_line[:detail_width-4],
-                                     self.COLOR_INFO)
-                except curses.error:
+                    safe_item_line = item_line[:detail_width-4] if len(item_line) > detail_width-4 else item_line
+                    safe_price_line = price_line[:detail_width-4] if len(price_line) > detail_width-4 else price_line
+                    
+                    if y < self.height - 2:
+                        self.stdscr.addstr(y, detail_x + 2, safe_item_line, self.COLOR_SUCCESS)
+                    if y + 1 < self.height - 1:
+                        self.stdscr.addstr(y + 1, detail_x + 2, safe_price_line, self.COLOR_INFO)
+                except (curses.error, ValueError, AttributeError):
                     pass
                 y += 2
             

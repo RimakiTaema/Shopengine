@@ -1,4 +1,11 @@
-"""Plugin-specific parsers for converting shop formats"""
+"""
+Plugin-specific parsers for converting shop formats.
+
+This module provides abstract base classes and concrete implementations for
+converting shop configurations between different Minecraft economy plugins.
+Supports both forward conversion (to ExcellentShop) and reverse conversion
+(from ExcellentShop to other formats).
+"""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
@@ -46,7 +53,10 @@ class ESGUIConverter(SourcePluginConverter):
                 sell_price=sell_price,
                 enchantments=item_data.get('enchantments'),
             )
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to convert ESGUI item: {e}")
             return None
 
 
@@ -119,4 +129,11 @@ SOURCE_PLUGIN_CONVERTERS = {
     'esgui': ESGUIConverter(),
     'dshop3': DShop3Converter(),
     'ultimateshop': UltimateShopConverter(),
+}
+
+# Reverse converter registry (from ExcellentShop to other formats)
+REVERSE_CONVERTERS = {
+    'esgui': 'convert_to_esgui',
+    'dshop3': 'convert_to_dshop3', 
+    'ultimateshop': 'convert_to_ultimateshop',
 }
