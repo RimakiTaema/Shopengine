@@ -387,6 +387,13 @@ class ShopConverterEngine:
     
     def convert_from_excellentshop(self, target_format: str = 'esgui') -> None:
         """Convert ExcellentShop files back to other plugin formats"""
+        # Show beta warning for ESGUI
+        if target_format == 'esgui' and self.tui:
+            self.tui.add_log("ESGUI conversion is in BETA - format may be incorrect", "WARNING")
+            self.tui.add_log("Please verify the output before using in production", "WARNING")
+            self.tui.draw_dashboard()
+            time.sleep(2)
+        
         if not os.path.exists(self.output_folder):
             msg = f"Source folder '{self.output_folder}' not found"
             logger.error(msg)
