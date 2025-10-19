@@ -1,4 +1,10 @@
-"""Data models for shop converter"""
+"""
+Data models for shop converter.
+
+This module defines the core data structures used throughout the shop conversion
+process, including price configurations, item configurations, and price format
+enumerations.
+"""
 
 from dataclasses import dataclass
 from typing import Dict, Optional, Any
@@ -19,6 +25,11 @@ class PriceConfig:
     buy_price: float
     sell_price: float
     extra: Dict[str, Any]
+    
+    def __post_init__(self):
+        """Validate price configuration after initialization"""
+        if self.buy_price < 0 or self.sell_price < 0:
+            raise ValueError("Prices must be non-negative")
 
 
 @dataclass

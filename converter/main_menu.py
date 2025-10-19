@@ -5,13 +5,14 @@ import sys
 import logging
 from curses import wrapper
 
-from converter import ShopConverterEngine, ShopConverterTUI
+from .engine import ShopConverterEngine
+from .ui import ShopConverterTUI
 from converter.utils import init_folders
 from converter.constants import SUPPORTED_PLUGINS
 
 logger = logging.getLogger(__name__)
 
-def main_menu(stdscr):
+def main_menu(stdscr) -> None:
     """
     Displays the main menu and handles user input.
     """
@@ -20,7 +21,8 @@ def main_menu(stdscr):
 
     while True:
         menu_items = [
-            "Convert Shops",
+            "Convert Shops (To ExcellentShop)",
+            "Convert from ExcellentShop",
             "Initialize Folders",
             "Exit"
         ]
@@ -32,7 +34,7 @@ def main_menu(stdscr):
         )
 
         if option == 0:
-            # Convert Shops
+            # Convert Shops (To ExcellentShop)
             try:
                 engine.convert_shops()
             except Exception as e:
@@ -40,8 +42,26 @@ def main_menu(stdscr):
                 tui.add_log(f"An unexpected error occurred: {e}", "ERROR")
                 tui.draw_dashboard()
 
-
         elif option == 1:
+            # Convert from ExcellentShop
+            try:
+                # Ask user for target format
+                format_options = ["ESGUI", "DShop3", "UltimateShop"]
+                format_idx = tui.show_menu(
+                    "Select Target Format",
+                    format_options,
+                    "Choose which plugin format to convert to"
+                )
+                
+                if format_idx != -1:
+                    target_format = format_options[format_idx].lower()
+                    engine.convert_from_excellentshop(target_format)
+            except Exception as e:
+                logger.exception("Error during reverse conversion")
+                tui.add_log(f"An unexpected error occurred: {e}", "ERROR")
+                tui.draw_dashboard()
+
+        elif option == 2:
             # Initialize Folders
             try:
                 init_folders()
@@ -54,7 +74,6 @@ def main_menu(stdscr):
                 tui.add_log(f"Error initializing folders: {e}", "ERROR")
                 tui.draw_dashboard()
 
-
-        elif option == 2 or option == -1:
+        elif option == 3 or option == -1:
             # Exit
             break

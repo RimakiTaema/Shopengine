@@ -218,8 +218,13 @@ class ShopConverterTUI:
             
             try:
                 self.log_pad.addstr(i, 0, log_line, color)
-            except curses.error:
-                pass
+            except (curses.error, ValueError):
+                # Handle curses errors and encoding issues
+                try:
+                    safe_line = log_line.encode('utf-8', errors='replace').decode('utf-8')
+                    self.log_pad.addstr(i, 0, safe_line[:self.width-4], color)
+                except (curses.error, ValueError):
+                    pass
         
         # Auto-scroll to bottom
         max_scroll = max(0, len(self.log_messages) - log_display_height)
@@ -232,7 +237,8 @@ class ShopConverterTUI:
                 y + 1, 2,
                 y + log_display_height, self.width - 3
             )
-        except curses.error:
+        except (curses.error, ValueError):
+            # Handle curses errors and invalid coordinates
             pass
     
     def draw_dashboard(self):
@@ -382,7 +388,7 @@ class ShopConverterTUI:
         try:
             input_str = self.stdscr.getstr(input_y, input_x + 2, 
                                           box_width - 6).decode('utf-8').strip()
-        except:
+        except (curses.error, UnicodeDecodeError, ValueError, AttributeError):
             input_str = ""
         
         curses.noecho()
@@ -504,8 +510,11 @@ class ShopConverterTUI:
                     break
                 line, color = content_lines[i]
                 try:
-                    self.stdscr.addstr(y, 2, line[:self.width-4], color)
-                except curses.error:
+                    safe_line = line[:self.width-4] if len(line) > self.width-4 else line
+                    # Ensure we don't exceed screen bounds
+                    if y < self.height - 1 and len(safe_line) > 0:
+                        self.stdscr.addstr(y, 2, safe_line, color)
+                except (curses.error, ValueError, AttributeError):
                     pass
                 y += 1
             
@@ -578,11 +587,14 @@ class ShopConverterTUI:
                 price_line = f"  Buy: ${buy:.2f} | Sell: ${sell:.2f}"
                 
                 try:
-                    self.stdscr.addstr(y, detail_x + 2, item_line[:detail_width-4], 
-                                     self.COLOR_SUCCESS)
-                    self.stdscr.addstr(y + 1, detail_x + 2, price_line[:detail_width-4],
-                                     self.COLOR_INFO)
-                except curses.error:
+                    safe_item_line = item_line[:detail_width-4] if len(item_line) > detail_width-4 else item_line
+                    safe_price_line = price_line[:detail_width-4] if len(price_line) > detail_width-4 else price_line
+                    
+                    if y < self.height - 2:
+                        self.stdscr.addstr(y, detail_x + 2, safe_item_line, self.COLOR_SUCCESS)
+                    if y + 1 < self.height - 1:
+                        self.stdscr.addstr(y + 1, detail_x + 2, safe_price_line, self.COLOR_INFO)
+                except (curses.error, ValueError, AttributeError):
                     pass
                 y += 2
             
@@ -760,11 +772,13 @@ class ShopConverterTUI:
                 if new_value:
                     if field in ['buy_price', 'sell_price']:
                         try:
-                            item[field] = float(new_value)
+                            float_val = float(new_value)
+                            if float_val >= 0:  # Ensure non-negative prices
+                                item[field] = float_val
                         except ValueError:
                             pass
                     else:
-                        item[field] = new_value
+                        item[field] = new_value.strip()
             elif key == ord('s') or key == ord('S'):
                 break
             elif key == 27:  # ESC

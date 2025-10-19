@@ -29,7 +29,7 @@ https://github.com/RimakiTaema/Shopengine/
 cd Shopengine
 
 # Run directly using Python (if applicable)
-python shop-converter.py
+python3 shop-converter.py
 ```
 
 # Usage
