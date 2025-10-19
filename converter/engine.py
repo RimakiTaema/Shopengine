@@ -217,6 +217,8 @@ class ShopConverterEngine:
                 self.tui.add_log(msg, "ERROR")
                 self.tui.draw_dashboard()
                 time.sleep(2)
+            else:
+                print(f"✗ {msg}")
             return
         
         os.makedirs(self.output_folder, exist_ok=True)
@@ -225,6 +227,8 @@ class ShopConverterEngine:
         if self.tui:
             self.tui.update_operation("Collecting shop data...")
             self.tui.draw_dashboard()
+        else:
+            print("Collecting shop data...")
         
         shops_data = self.collect_shop_data()
         total_shops = len(shops_data)
@@ -234,6 +238,11 @@ class ShopConverterEngine:
                 self.tui.add_log("No shops found to convert", "WARNING")
                 self.tui.draw_dashboard()
                 time.sleep(2)
+            else:
+                print("⚠ No shops found to convert")
+                print("Place your shop files in the appropriate plugin folder:")
+                for plugin in ['esgui', 'dshop3', 'ultimateshop']:
+                    print(f"  - shops_to_convert/{plugin}/")
             return
         
         if self.tui:
@@ -252,8 +261,13 @@ class ShopConverterEngine:
             self.tui.update_progress(0, total_shops, "Starting conversion...")
             self.tui.draw_dashboard()
             time.sleep(0.5)
+        else:
+            print(f"✓ Found {total_shops} shops to convert")
+            print("Starting conversion...")
         
         current_shop = 0
+        success_count = 0
+        error_count = 0
         
         # Convert shops
         for shop_name, shop_info in shops_data.items():
@@ -263,15 +277,21 @@ class ShopConverterEngine:
                 self.tui.update_operation(f"Converting: {shop_name}")
                 self.tui.update_progress(current_shop, total_shops, shop_name)
                 self.tui.draw_dashboard()
+            else:
+                print(f"[{current_shop}/{total_shops}] Converting: {shop_name}")
             
             try:
                 self._convert_shop_from_data(shop_name, shop_info)
+                success_count += 1
             except Exception as e:
                 msg = f"Failed to convert {shop_name}: {e}"
                 logger.error(msg)
+                error_count += 1
                 if self.tui:
                     self.tui.add_log(msg, "ERROR")
                     self.tui.draw_dashboard()
+                else:
+                    print(f"✗ {msg}")
         
         if self.tui:
             self.tui.update_operation("Conversion complete!")
@@ -279,7 +299,13 @@ class ShopConverterEngine:
             time.sleep(1)
             self.tui.show_completion()
         else:
-            self._print_console_stats()
+            print("\n" + "="*50)
+            print("CONVERSION COMPLETE")
+            print("="*50)
+            print(f"✓ Successful: {success_count}")
+            print(f"✗ Errors: {error_count}")
+            print(f"📁 Output folder: {self.output_folder}")
+            print("="*50)
     
     def convert_from_excellentshop(self, target_format: str = 'esgui') -> None:
         """Convert ExcellentShop files back to other plugin formats"""
@@ -376,6 +402,8 @@ class ShopConverterEngine:
         if not items:
             if self.tui:
                 self.tui.add_log(f"Skipped {shop_name} (no items)", "WARNING")
+            else:
+                print(f"⚠ Skipped {shop_name} (no items)")
             return
         
         # Get price configuration
@@ -433,6 +461,8 @@ class ShopConverterEngine:
         if self.tui:
             self.tui.add_log(msg, "SUCCESS")
             self.tui.draw_dashboard()
+        else:
+            print(f"  {msg}")
     
     def _get_or_cache_price_config(self, shop_name: str) -> Tuple[PriceConfig, str]:
         """Get or create cached price configuration"""

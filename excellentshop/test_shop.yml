@@ -1,0 +1,109 @@
+Settings:
+  Aliases: []
+  Name: <soft_yellow><b>test_shop</b></soft_yellow>
+  Description: []
+  Icon:
+    Material: minecraft:chest
+    Lore: []
+  Permission_Required: false
+  Buying: true
+  Selling: true
+  Pages: 2
+  MainMenu:
+    Slot: 10
+  Layout:
+    Paginated: false
+    ByPage:
+      '0': default
+      '1': default
+Items:
+  minecraft:diamond:
+    Type: ITEM
+    Item:
+      Provider: vanilla
+      Data:
+        Value: '{count:1,id:"minecraft:diamond"}'
+        DataVersion: 4189
+        Enchantments: []
+      CompareNBT: false
+    Rotating: false
+    Allowed_Ranks: []
+    Required_Permissions: []
+    Forbidden_Permissions: []
+    Currency: coins
+    Price:
+      Type: FLAT
+      BUY: 0.0
+      SELL: 0.0
+    Stock:
+      GLOBAL:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+      PLAYER:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+    Shop_View:
+      Slot: 0
+      Page: 1
+  minecraft:emerald:
+    Type: ITEM
+    Item:
+      Provider: vanilla
+      Data:
+        Value: '{count:1,id:"minecraft:emerald"}'
+        DataVersion: 4189
+        Enchantments: []
+      CompareNBT: false
+    Rotating: false
+    Allowed_Ranks: []
+    Required_Permissions: []
+    Forbidden_Permissions: []
+    Currency: coins
+    Price:
+      Type: FLAT
+      BUY: 0.0
+      SELL: 0.0
+    Stock:
+      GLOBAL:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+      PLAYER:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+    Shop_View:
+      Slot: 1
+      Page: 1
+  minecraft:gold_ingot:
+    Type: ITEM
+    Item:
+      Provider: vanilla
+      Data:
+        Value: '{count:1,id:"minecraft:gold_ingot"}'
+        DataVersion: 4189
+        Enchantments: []
+      CompareNBT: false
+    Rotating: false
+    Allowed_Ranks: []
+    Required_Permissions: []
+    Forbidden_Permissions: []
+    Currency: coins
+    Price:
+      Type: FLAT
+      BUY: 0.0
+      SELL: 0.0
+    Stock:
+      GLOBAL:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+      PLAYER:
+        BuyAmount: -1
+        SellAmount: -1
+        RestockTime: 0
+    Shop_View:
+      Slot: 2
+      Page: 1
