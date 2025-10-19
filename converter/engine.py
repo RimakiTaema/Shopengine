@@ -7,11 +7,11 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Any
 
-from .models import PriceConfig, PriceFormat, ItemConfig
-from .parsers import SOURCE_PLUGIN_CONVERTERS, REVERSE_CONVERTERS
-from .constants import SHOP_METADATA
-from .utils import create_excellent_shop_item, validate_price_input, validate_positive_int
-from .excellentshop_parser import ExcellentShopParser, ReverseConverter
+from converter.models import PriceConfig, PriceFormat, ItemConfig
+from converter.parsers import SOURCE_PLUGIN_CONVERTERS, REVERSE_CONVERTERS
+from converter.constants import SHOP_METADATA
+from converter.utils import create_excellent_shop_item, validate_price_input, validate_positive_int
+from converter.excellentshop_parser import ExcellentShopParser, ReverseConverter
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +40,27 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
         format_idx = tui.show_menu(
             "Select Pricing Format",
             ["FLAT - Fixed buy/sell prices", 
-             "FLOAT - Fluctuating prices with min/max",
-             "DYNAMIC - Supply/demand based pricing"],
+             "FLOAT_INTERVAL - Fluctuating prices (all day, no times)",
+             "FLOAT_FIXED - Fluctuating prices (day config unlocked, times set)",
+             "DYNAMIC - [New] Supply/demand based pricing",
+             "PLAYER - [Soon] Player-based pricing format",
+             "FLOAT - [DEPRECATED] Old fluctuating prices format"],
             "Choose how prices should be calculated"
         )
         
         if format_idx == -1:
             raise KeyboardInterrupt("User cancelled")
         
-        price_format = [PriceFormat.FLAT, PriceFormat.FLOAT, PriceFormat.DYNAMIC][format_idx]
+        price_format = [PriceFormat.FLAT, PriceFormat.FLOAT_INTERVAL, 
+                       PriceFormat.FLOAT_FIXED, PriceFormat.DYNAMIC, PriceFormat.PLAYER, PriceFormat.FLOAT][format_idx]
+        
+        # Handle "Soon" formats
+        if price_format == PriceFormat.PLAYER:
+            tui.add_log("This pricing format is not yet implemented", "WARNING")
+            tui.add_log("Please check back in a future update", "INFO")
+            tui.draw_dashboard()
+            tui.get_input("Press Enter to continue...", "")
+            return get_price_config_interactive(shop_name, tui)
         
         extra = {}
         buy_price = sell_price = 0.0
@@ -56,14 +68,38 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
         if price_format == PriceFormat.FLOAT:
             buy_price = validate_price_input(tui.get_input("Minimum price:", "0"), 0.0)
             sell_price = validate_price_input(tui.get_input("Maximum price:", "999999"), 999999.0)
-            step = validate_price_input(tui.get_input("Price step size:", "1"), 1.0)
             timer = validate_positive_int(tui.get_input("Update timer (seconds):", "30"), 30)
             
             # Ensure min <= max
             if buy_price > sell_price:
                 buy_price, sell_price = sell_price, buy_price
             
-            extra = {'MIN': buy_price, 'MAX': sell_price, 'STEP': step, 'TIMER': timer}
+            extra = {'MIN': buy_price, 'MAX': sell_price, 'TIMER': timer}
+        
+        elif price_format == PriceFormat.FLOAT_INTERVAL:
+            buy_price = validate_price_input(tui.get_input("Minimum price:", "0"), 0.0)
+            sell_price = validate_price_input(tui.get_input("Maximum price:", "999999"), 999999.0)
+            timer = validate_positive_int(tui.get_input("Update timer (seconds):", "30"), 30)
+            
+            # Ensure min <= max
+            if buy_price > sell_price:
+                buy_price, sell_price = sell_price, buy_price
+            
+            extra = {'MIN': buy_price, 'MAX': sell_price, 'TIMER': timer, 'Round_Decimals': False}
+        
+        elif price_format == PriceFormat.FLOAT_FIXED:
+            buy_price = validate_price_input(tui.get_input("Minimum price:", "0"), 0.0)
+            sell_price = validate_price_input(tui.get_input("Maximum price:", "999999"), 999999.0)
+            day_config = tui.get_input("Day configuration (e.g., 'monday,tuesday' or 'all'):", "all")
+            start_time = tui.get_input("Start time (HH:MM format):", "00:00")
+            end_time = tui.get_input("End time (HH:MM format):", "23:59")
+            
+            # Ensure min <= max
+            if buy_price > sell_price:
+                buy_price, sell_price = sell_price, buy_price
+            
+            extra = {'MIN': buy_price, 'MAX': sell_price, 
+                    'Round_Decimals': False, 'Day_Config': day_config, 'Start_Time': start_time, 'End_Time': end_time}
         
         elif price_format == PriceFormat.DYNAMIC:
             buy_price = validate_price_input(tui.get_input("Initial price:", "100"), 100.0)
@@ -85,7 +121,23 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
             buy_price = validate_price_input(tui.get_input("Buy price:", "100"), 100.0)
             sell_price = validate_price_input(tui.get_input("Sell price:", "50"), 50.0)
         
-        tui.add_log(f"Price config set: {price_format.value} (scope: {scope})", "SUCCESS")
+        # Show configuration summary and ask for confirmation
+        config_summary = f"Format: {price_format.value}\n"
+        config_summary += f"Buy Price: {buy_price}\n"
+        config_summary += f"Sell Price: {sell_price}\n"
+        if extra:
+            config_summary += f"Extra Config: {extra}\n"
+        config_summary += f"Scope: {scope}"
+        
+        tui.add_log("Price configuration summary:", "INFO")
+        tui.add_log(config_summary, "INFO")
+        
+        # Ask for confirmation
+        if not tui.show_yes_no("Confirm Configuration", "Is this price configuration correct?"):
+            # User said no, restart configuration
+            return get_price_config_interactive(shop_name, tui)
+        
+        tui.add_log(f"Price config confirmed: {price_format.value} (scope: {scope})", "SUCCESS")
         
         return PriceConfig(price_format, buy_price, sell_price, extra), scope
     
@@ -95,7 +147,7 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
         
         scope = input("Apply to this shop or all? [this/all]: ").strip().lower() or 'this'
         
-        print("Formats: FLAT, FLOAT, DYNAMIC")
+        print("Formats: FLAT, FLOAT_INTERVAL, FLOAT_FIXED, DYNAMIC (new), PLAYER (soon), FLOAT (deprecated)")
         price_format_str = input("Format: ").strip().upper() or 'FLAT'
         
         try:
@@ -104,15 +156,36 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
             logger.warning(f"Invalid format, using FLAT")
             price_format = PriceFormat.FLAT
         
+        # Handle "Soon" formats
+        if price_format == PriceFormat.PLAYER:
+            print("\nThis pricing format is not yet implemented")
+            print("Please check back in a future update")
+            input("Press Enter to continue...")
+            return get_price_config_interactive(shop_name, tui)
+        
         extra = {}
         buy_price = sell_price = 0.0
         
         if price_format == PriceFormat.FLOAT:
             buy_price = float(input("Min price: ") or 0)
             sell_price = float(input("Max price: ") or 999999)
-            step = float(input("Step: ") or 1)
             timer = int(input("Timer: ") or 30)
-            extra = {'MIN': buy_price, 'MAX': sell_price, 'STEP': step, 'TIMER': timer}
+            extra = {'MIN': buy_price, 'MAX': sell_price, 'TIMER': timer}
+        
+        elif price_format == PriceFormat.FLOAT_INTERVAL:
+            buy_price = float(input("Min price: ") or 0)
+            sell_price = float(input("Max price: ") or 999999)
+            timer = int(input("Timer: ") or 30)
+            extra = {'MIN': buy_price, 'MAX': sell_price, 'TIMER': timer, 'Round_Decimals': False}
+        
+        elif price_format == PriceFormat.FLOAT_FIXED:
+            buy_price = float(input("Min price: ") or 0)
+            sell_price = float(input("Max price: ") or 999999)
+            day_config = input("Day config (e.g., 'monday,tuesday' or 'all'): ") or "all"
+            start_time = input("Start time (HH:MM): ") or "00:00"
+            end_time = input("End time (HH:MM): ") or "23:59"
+            extra = {'MIN': buy_price, 'MAX': sell_price, 
+                    'Round_Decimals': False, 'Day_Config': day_config, 'Start_Time': start_time, 'End_Time': end_time}
         
         elif price_format == PriceFormat.DYNAMIC:
             buy_price = float(input("Initial: ") or 100)
@@ -122,10 +195,25 @@ def get_price_config_interactive(shop_name: str, tui=None) -> Tuple[PriceConfig,
             max_p = float(input("Max: ") or 999999)
             extra = {'INITIAL': buy_price, 'STEP': step, 'MIN': min_p, 'MAX': max_p}
         
-        else:
+        else:  # FLAT
             buy_price = float(input("Buy: ") or 100)
             sell_price = float(input("Sell: ") or 50)
         
+        # Show configuration summary and ask for confirmation
+        print(f"\nConfiguration Summary:")
+        print(f"Format: {price_format.value}")
+        print(f"Buy Price: {buy_price}")
+        print(f"Sell Price: {sell_price}")
+        if extra:
+            print(f"Extra Config: {extra}")
+        print(f"Scope: {scope}")
+        
+        confirm = input("\nIs this configuration correct? [y/N]: ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("Restarting configuration...")
+            return get_price_config_interactive(shop_name, tui)
+        
+        print(f"✓ Price config confirmed: {price_format.value} (scope: {scope})")
         return PriceConfig(price_format, buy_price, sell_price, extra), scope
 
 
@@ -309,6 +397,13 @@ class ShopConverterEngine:
     
     def convert_from_excellentshop(self, target_format: str = 'esgui') -> None:
         """Convert ExcellentShop files back to other plugin formats"""
+        # Show beta warning for ESGUI
+        if target_format == 'esgui' and self.tui:
+            self.tui.add_log("ESGUI conversion is in BETA - format may be incorrect", "WARNING")
+            self.tui.add_log("Please verify the output before using in production", "WARNING")
+            self.tui.draw_dashboard()
+            time.sleep(2)
+        
         if not os.path.exists(self.output_folder):
             msg = f"Source folder '{self.output_folder}' not found"
             logger.error(msg)
@@ -470,7 +565,7 @@ class ShopConverterEngine:
             price_config, scope = get_price_config_interactive(shop_name, self.tui)
             
             if scope == 'all':
-                from .constants import SUPPORTED_PLUGINS
+                from converter.constants import SUPPORTED_PLUGINS
                 for plugin in SUPPORTED_PLUGINS:
                     self.price_cache[plugin] = price_config
             
