@@ -1,0 +1,18 @@
+pages:
+  page1:
+    items:
+      "1":
+        material: "minecraft:diamond"
+        buy_price: 100.0
+        sell_price: 50.0
+        slot: 1
+      "2":
+        material: "minecraft:emerald"
+        buy_price: 200.0
+        sell_price: 100.0
+        slot: 2
+      "3":
+        material: "minecraft:gold_ingot"
+        buy_price: 50.0
+        sell_price: 25.0
+        slot: 3

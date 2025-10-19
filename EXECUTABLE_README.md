@@ -49,9 +49,21 @@ PYTHONPATH=/workspace python3 shop-converter.py
 - ✅ Added fallback console mode when terminal UI is not available
 - ✅ Created standalone executable using PyInstaller
 - ✅ Added launcher script for easy execution
+- ✅ Fixed console mode to work properly without curses
+- ✅ Added proper error handling and user feedback in console mode
 
 ## Notes
 - The executable is built for Linux x86_64 systems
 - All versions will fall back to console mode if the terminal doesn't support curses
 - The converter will create a `shops_to_convert` directory structure when you run `init`
 - Place your shop configuration files in the appropriate plugin subdirectories
+- Console mode provides clear feedback and progress information
+- The converter supports interactive price configuration in console mode
+
+## Tested Working Features
+- ✅ Console mode conversion (no curses required)
+- ✅ Interactive price configuration
+- ✅ Shop data collection and processing
+- ✅ Output file generation
+- ✅ Error handling and user feedback
+- ✅ Both Python script and executable versions
