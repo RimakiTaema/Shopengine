@@ -7,11 +7,11 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Any
 
-from .models import PriceConfig, PriceFormat, ItemConfig
-from .parsers import SOURCE_PLUGIN_CONVERTERS, REVERSE_CONVERTERS
-from .constants import SHOP_METADATA
-from .utils import create_excellent_shop_item, validate_price_input, validate_positive_int
-from .excellentshop_parser import ExcellentShopParser, ReverseConverter
+from converter.models import PriceConfig, PriceFormat, ItemConfig
+from converter.parsers import SOURCE_PLUGIN_CONVERTERS, REVERSE_CONVERTERS
+from converter.constants import SHOP_METADATA
+from converter.utils import create_excellent_shop_item, validate_price_input, validate_positive_int
+from converter.excellentshop_parser import ExcellentShopParser, ReverseConverter
 
 logger = logging.getLogger(__name__)
 
@@ -470,7 +470,7 @@ class ShopConverterEngine:
             price_config, scope = get_price_config_interactive(shop_name, self.tui)
             
             if scope == 'all':
-                from .constants import SUPPORTED_PLUGINS
+                from converter.constants import SUPPORTED_PLUGINS
                 for plugin in SUPPORTED_PLUGINS:
                     self.price_cache[plugin] = price_config
             
