@@ -19,6 +19,11 @@ class PriceConfig:
     buy_price: float
     sell_price: float
     extra: Dict[str, Any]
+    
+    def __post_init__(self):
+        """Validate price configuration after initialization"""
+        if self.buy_price < 0 or self.sell_price < 0:
+            raise ValueError("Prices must be non-negative")
 
 
 @dataclass

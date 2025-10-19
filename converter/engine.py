@@ -158,17 +158,25 @@ class ShopConverterEngine:
                     pages = source_data.get('pages', {})
                     
                     for page_name, page_data in pages.items():
+                        if not isinstance(page_data, dict):
+                            continue
                         for item_slot, item_data in page_data.get('items', {}).items():
+                            if not isinstance(item_data, dict):
+                                continue
                             item_config = converter.convert_item(item_data)
                             
                             if item_config and item_config.material:
-                                items.append({
-                                    'material': item_config.material,
-                                    'buy_price': float(item_config.buy_price) if item_config.buy_price is not None else 0.0,
-                                    'sell_price': float(item_config.sell_price) if item_config.sell_price is not None else 0.0,
-                                    'slot': int(item_slot) - 1,
-                                    'page': self._extract_page_number(page_name)
-                                })
+                                try:
+                                    items.append({
+                                        'material': item_config.material,
+                                        'buy_price': float(item_config.buy_price) if item_config.buy_price is not None else 0.0,
+                                        'sell_price': float(item_config.sell_price) if item_config.sell_price is not None else 0.0,
+                                        'slot': int(item_slot) - 1,
+                                        'page': self._extract_page_number(page_name)
+                                    })
+                                except (ValueError, TypeError) as ve:
+                                    logger.warning(f"Invalid data for item in {shop_name}: {ve}")
+                                    continue
                     
                     shops_data[shop_name] = {
                         'items': items,
@@ -177,8 +185,10 @@ class ShopConverterEngine:
                         'input_path': input_path
                     }
                 
-                except Exception as e:
+                except (yaml.YAMLError, IOError, OSError) as e:
                     logger.error(f"Failed to collect data for {shop_name}: {e}")
+                except Exception as e:
+                    logger.error(f"Unexpected error collecting data for {shop_name}: {e}")
         
         return shops_data
     
@@ -298,9 +308,17 @@ class ShopConverterEngine:
         
         # Write output
         output_path = os.path.join(self.output_folder, f"{shop_name}.yml")
-        with open(output_path, 'w', encoding='utf-8') as f:
-            yaml.dump(excellent_shop, f, default_flow_style=False,
-                     sort_keys=False, allow_unicode=True)
+        try:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                yaml.dump(excellent_shop, f, default_flow_style=False,
+                         sort_keys=False, allow_unicode=True)
+        except (IOError, OSError) as e:
+            msg = f"Failed to write output for {shop_name}: {e}"
+            logger.error(msg)
+            if self.tui:
+                self.tui.add_log(msg, "ERROR")
+                self.tui.draw_dashboard()
+            return
         
         msg = f"✓ {shop_name} ({item_count} items)"
         logger.info(msg)
@@ -320,7 +338,7 @@ class ShopConverterEngine:
             
             self.price_cache[shop_name] = price_config
         
-        return self.price_cache[shop_name], 'this'
+        return self.price_cache[shop_name], scope if shop_name in self.price_cache else 'this'
     
     def _create_shop_structure(self, shop_name: str, page_count: int, 
                                price_config: PriceConfig) -> Dict[str, Any]:

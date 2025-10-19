@@ -5,7 +5,8 @@ import sys
 import logging
 from curses import wrapper
 
-from converter import ShopConverterEngine, ShopConverterTUI
+from .engine import ShopConverterEngine
+from .ui import ShopConverterTUI
 from converter.utils import init_folders
 from converter.constants import SUPPORTED_PLUGINS
 

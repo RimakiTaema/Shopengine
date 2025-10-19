@@ -29,12 +29,17 @@ logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1].lower() == 'init':
-        init_folders()
-        print("✓ Folder structure initialized!")
-        print("\nCreated directories:")
-        for plugin in SUPPORTED_PLUGINS:
-            print(f"  - shops_to_convert/{plugin}/")
-        print("\nPlace your shop files in the appropriate plugin folder.")
+        try:
+            init_folders()
+            print("✓ Folder structure initialized!")
+            print("\nCreated directories:")
+            for plugin in SUPPORTED_PLUGINS:
+                print(f"  - shops_to_convert/{plugin}/")
+            print("\nPlace your shop files in the appropriate plugin folder.")
+        except Exception as e:
+            print(f"\n✗ Failed to initialize folders: {e}")
+            logger.exception("Failed to initialize folders")
+            sys.exit(1)
     else:
         try:
             wrapper(main_menu)
@@ -43,3 +48,4 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"\n\n✗ Fatal error: {e}")
             logger.exception("Fatal error occurred")
+            sys.exit(1)

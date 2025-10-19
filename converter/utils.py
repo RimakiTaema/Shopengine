@@ -31,6 +31,13 @@ def create_excellent_shop_item(
     if not item_config or not item_config.material:
         return None
     
+    # Validate prices
+    buy_price = float(item_config.buy_price) if item_config.buy_price is not None else 0.0
+    sell_price = float(item_config.sell_price) if item_config.sell_price is not None else 0.0
+    
+    if buy_price < 0 or sell_price < 0:
+        return None
+    
     price_format = price_config.format.value if price_config else 'FLAT'
     extra_params = price_config.extra if price_config else {}
     
@@ -56,8 +63,8 @@ def create_excellent_shop_item(
         'Currency': currency,
         'Price': {
             'Type': price_format,
-            'BUY': float(item_config.buy_price),
-            'SELL': float(item_config.sell_price),
+            'BUY': buy_price,
+            'SELL': sell_price,
             **extra_params
         },
         'Stock': {
@@ -79,7 +86,15 @@ def init_folders(base_folder: str = 'shops_to_convert') -> None:
     try:
         os.makedirs(base_folder, exist_ok=True)
         for plugin in SUPPORTED_PLUGINS:
-            os.makedirs(os.path.join(base_folder, plugin), exist_ok=True)
+            plugin_path = os.path.join(base_folder, plugin)
+            os.makedirs(plugin_path, exist_ok=True)
+            # Create a README file in each plugin folder
+            readme_path = os.path.join(plugin_path, 'README.txt')
+            if not os.path.exists(readme_path):
+                with open(readme_path, 'w', encoding='utf-8') as f:
+                    f.write(f"Place your {plugin} shop configuration files here.\n")
+                    f.write(f"Supported formats: .yml, .yaml\n")
         logger.info(f"Initialized folder structure in '{base_folder}'")
-    except Exception as e:
+    except (OSError, IOError) as e:
         logger.error(f"Failed to initialize folders: {e}")
+        raise

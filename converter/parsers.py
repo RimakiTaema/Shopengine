@@ -15,7 +15,7 @@ class SourcePluginConverter(ABC):
     
     def validate(self, item_data: Dict[str, Any]) -> bool:
         """Validate item data before conversion"""
-        return bool(item_data)
+        return bool(item_data) and isinstance(item_data, dict)
 
 
 class ESGUIConverter(SourcePluginConverter):
@@ -25,15 +25,29 @@ class ESGUIConverter(SourcePluginConverter):
         if not self.validate(item_data):
             return None
         
-        buy_price = item_data.get('buy', 0)
-        sell_price = item_data.get('sell', 0)
+        material = item_data.get('material')
+        if not material or not isinstance(material, str):
+            return None
         
-        return ItemConfig(
-            material=item_data.get('material'),
-            buy_price=float(buy_price) if buy_price is not None else 0.0,
-            sell_price=float(sell_price) if sell_price is not None else 0.0,
-            enchantments=item_data.get('enchantments'),
-        )
+        try:
+            buy_price = item_data.get('buy', 0)
+            sell_price = item_data.get('sell', 0)
+            
+            buy_price = float(buy_price) if buy_price is not None else 0.0
+            sell_price = float(sell_price) if sell_price is not None else 0.0
+            
+            # Validate prices
+            if buy_price < 0 or sell_price < 0:
+                return None
+            
+            return ItemConfig(
+                material=material,
+                buy_price=buy_price,
+                sell_price=sell_price,
+                enchantments=item_data.get('enchantments'),
+            )
+        except (ValueError, TypeError):
+            return None
 
 
 class DShop3Converter(SourcePluginConverter):
@@ -43,15 +57,29 @@ class DShop3Converter(SourcePluginConverter):
         if not self.validate(item_data):
             return None
         
-        buy_price = item_data.get('price_buy', 0)
-        sell_price = item_data.get('price_sell', 0)
+        material = item_data.get('id')
+        if not material or not isinstance(material, str):
+            return None
         
-        return ItemConfig(
-            material=item_data.get('id'),
-            buy_price=float(buy_price) if buy_price is not None else 0.0,
-            sell_price=float(sell_price) if sell_price is not None else 0.0,
-            enchantments=item_data.get('enchants'),
-        )
+        try:
+            buy_price = item_data.get('price_buy', 0)
+            sell_price = item_data.get('price_sell', 0)
+            
+            buy_price = float(buy_price) if buy_price is not None else 0.0
+            sell_price = float(sell_price) if sell_price is not None else 0.0
+            
+            # Validate prices
+            if buy_price < 0 or sell_price < 0:
+                return None
+            
+            return ItemConfig(
+                material=material,
+                buy_price=buy_price,
+                sell_price=sell_price,
+                enchantments=item_data.get('enchants'),
+            )
+        except (ValueError, TypeError):
+            return None
 
 
 class UltimateShopConverter(SourcePluginConverter):
@@ -61,15 +89,29 @@ class UltimateShopConverter(SourcePluginConverter):
         if not self.validate(item_data):
             return None
         
-        buy_price = item_data.get('buy', 0)
-        sell_price = item_data.get('sell', 0)
+        material = item_data.get('item_name')
+        if not material or not isinstance(material, str):
+            return None
         
-        return ItemConfig(
-            material=item_data.get('item_name'),
-            buy_price=float(buy_price) if buy_price is not None else 0.0,
-            sell_price=float(sell_price) if sell_price is not None else 0.0,
-            enchantments=item_data.get('enchants'),
-        )
+        try:
+            buy_price = item_data.get('buy', 0)
+            sell_price = item_data.get('sell', 0)
+            
+            buy_price = float(buy_price) if buy_price is not None else 0.0
+            sell_price = float(sell_price) if sell_price is not None else 0.0
+            
+            # Validate prices
+            if buy_price < 0 or sell_price < 0:
+                return None
+            
+            return ItemConfig(
+                material=material,
+                buy_price=buy_price,
+                sell_price=sell_price,
+                enchantments=item_data.get('enchants'),
+            )
+        except (ValueError, TypeError):
+            return None
 
 
 # Converter registry
