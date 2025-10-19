@@ -165,7 +165,6 @@ def _create_price_structure(price_format: str, buy_price: float, sell_price: flo
             },
             'Refresh': {
                 'Type': 'FIXED',
-                'Interval': extra_params.get('TIMER', 60),
                 'Days': days,
                 'Times': [
                     extra_params.get('Start_Time', '00:00'),
