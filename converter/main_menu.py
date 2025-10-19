@@ -9,6 +9,7 @@ from converter.engine import ShopConverterEngine
 from converter.ui import ShopConverterTUI
 from converter.utils import init_folders
 from converter.constants import SUPPORTED_PLUGINS
+from converter.gui_editor import GUIEditor
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ def main_menu(stdscr) -> None:
         menu_items = [
             "Convert Shops (To ExcellentShop)",
             "Convert from ExcellentShop",
+            "GUI Editor (New)",
             "Initialize Folders",
             "Exit"
         ]
